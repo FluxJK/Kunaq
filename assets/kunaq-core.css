@@ -1,0 +1,74 @@
+/* Componentes compartidos de Kunaq (estado de conexión, avisos, alerta de emergencia, equipos vinculados)
+   Paleta tomada del logo:  marino #061A44 · azul #1E90FF · cian #3FE0FF · verde agua #1DD3B0          */
+:root {
+  --kq-marino: #061A44; --kq-marino-2: #0B2A66; --kq-azul: #1E90FF; --kq-cian: #3FE0FF; --kq-agua: #1DD3B0;
+  --kq-rojo: #E5383B; --kq-ambar: #F59E0B; --kq-verde: #16A34A; --kq-texto: #F8FAFC;
+}
+.kq-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 3px solid var(--kq-cian); outline-offset: 2px; }
+
+/* ----- Botones ----- */
+.kq-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; border-radius: 10px; border: 0;
+  font: 700 0.95rem/1.1 'Segoe UI', system-ui, sans-serif; cursor: pointer; width: auto; margin: 0; }
+.kq-btn--ok { background: var(--kq-agua); color: #03231D; }
+.kq-btn--peligro { background: var(--kq-rojo); color: #fff; }
+.kq-btn--sec { background: transparent; color: inherit; border: 2px solid currentColor; }
+.kq-btn:hover { filter: brightness(1.08); }
+
+/* ----- Estado de conexión ----- */
+.kq-estado { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; font: 600 0.82rem 'Segoe UI', system-ui, sans-serif;
+  background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.kq-estado__punto { width: 9px; height: 9px; border-radius: 50%; background: #94A3B8; flex: none; }
+.kq-estado--buena .kq-estado__punto, .kq-estado--simulada .kq-estado__punto { background: #34D399; box-shadow: 0 0 8px #34D399; }
+.kq-estado--debil .kq-estado__punto { background: var(--kq-ambar); box-shadow: 0 0 8px var(--kq-ambar); }
+.kq-estado--sin_conexion .kq-estado__punto { background: #F87171; }
+.kq-estado__cola { background: var(--kq-ambar); color: #3A2500; padding: 1px 8px; border-radius: 999px; font-size: .75rem; }
+
+/* ----- Avisos ----- */
+.kq-toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 9000; max-width: min(380px, calc(100vw - 32px)); }
+.kq-toast { background: var(--kq-marino); color: #fff; padding: 12px 16px; border-radius: 10px; border-left: 5px solid var(--kq-agua);
+  font: 600 .92rem/1.35 'Segoe UI', system-ui, sans-serif; box-shadow: 0 8px 24px rgba(0,0,0,.3); transition: opacity .3s, transform .3s; }
+.kq-toast--error { border-left-color: var(--kq-rojo); } .kq-toast--aviso { border-left-color: var(--kq-ambar); }
+.kq-toast--sale { opacity: 0; transform: translateY(8px); }
+
+/* ----- Prioridad ----- */
+.kq-prio { display: inline-block; padding: 3px 10px; border-radius: 6px; font: 700 .8rem 'Segoe UI', sans-serif; }
+.kq-prio--p1 { background: var(--kq-rojo); color: #fff; } .kq-prio--p2 { background: var(--kq-ambar); color: #3A2500; } .kq-prio--p3 { background: #FDE047; color: #422006; }
+
+/* ----- Equipos vinculados ----- */
+.kq-disp-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.kq-disp { background: rgba(255,255,255,.06); border: 1px solid rgba(63,224,255,.2); border-radius: 12px; padding: 14px; font-family: 'Segoe UI', system-ui, sans-serif; }
+.kq-disp header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kq-disp__punto { width: 10px; height: 10px; border-radius: 50%; background: #94A3B8; flex: none; }
+.kq-disp--en_linea .kq-disp__punto { background: #34D399; box-shadow: 0 0 8px #34D399; } .kq-disp--debil .kq-disp__punto { background: var(--kq-ambar); }
+.kq-disp--sin_senal { opacity: .65; } .kq-disp--sin_senal .kq-disp__punto { background: #F87171; }
+.kq-disp__yo { font-style: normal; font-size: .72rem; font-weight: 700; background: var(--kq-cian); color: var(--kq-marino); padding: 1px 8px; border-radius: 999px; }
+.kq-disp__meta { font-size: .82rem; color: #A9BEDF; margin: 6px 0; }
+.kq-disp__caps { list-style: none; padding: 0; margin: 6px 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.kq-disp__caps li { font-size: .72rem; background: rgba(29,211,176,.16); color: #7CF0D6; padding: 2px 8px; border-radius: 6px; }
+.kq-disp__senal { font-size: .78rem; color: #8BA3CB; margin: 6px 0 0; }
+.kq-vacio { color: #8BA3CB; font-size: .9rem; margin: 0; }
+
+/* ----- Alerta de emergencia a pantalla completa ----- */
+.kq-alerta { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(120, 10, 15, .88); animation: kq-pulso 1.1s ease-in-out infinite; font-family: 'Segoe UI', system-ui, sans-serif; overflow-y: auto; }
+.kq-alerta[hidden] { display: none; }
+@keyframes kq-pulso { 0%,100% { background: rgba(120,10,15,.88); } 50% { background: rgba(190,24,30,.92); } }
+.kq-alerta__panel { background: #fff; color: #0F172A; width: min(560px, 100%); border-radius: 16px; padding: 24px; border-top: 8px solid var(--kq-rojo); box-shadow: 0 20px 60px rgba(0,0,0,.5); display: grid; gap: 16px; }
+.kq-alerta__cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.kq-alerta__cab p { margin: 0 0 6px; } .kq-alerta__cab h2 { margin: 0; font-size: 1.6rem; color: #991B1B; line-height: 1.1; }
+.kq-alerta__mas { font-size: .8rem; font-weight: 700; color: #991B1B; background: #FEE2E2; padding: 4px 10px; border-radius: 999px; white-space: nowrap; } .kq-alerta__mas:empty { display: none; }
+.kq-alerta__origen { margin: 0; font-size: 1rem; color: #334155; }
+.kq-alerta__datos { margin: 0; display: grid; gap: 8px; } .kq-alerta__datos div { display: grid; grid-template-columns: 120px 1fr; gap: 8px; }
+.kq-alerta__datos dt { color: #64748B; font-size: .88rem; } .kq-alerta__datos dd { margin: 0; font-weight: 600; }
+.kq-alerta__sub { margin: 0 0 6px; font-size: .88rem; color: #64748B; font-weight: 600; }
+.kq-alerta__reqs { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.kq-alerta__reqs li { padding: 8px 12px; border-radius: 8px; font-weight: 600; background: #F1F5F9; }
+.kq-alerta__reqs li.si { background: #DCFCE7; color: #14532D; } .kq-alerta__reqs li.no { background: #FEE2E2; color: #7F1D1D; }
+.kq-alerta__reqs small { font-weight: 400; margin-left: 6px; }
+.kq-alerta__rechazo { display: grid; gap: 8px; } .kq-alerta__rechazo[hidden] { display: none; }
+.kq-alerta__rechazo input { padding: 10px; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; margin: 0; }
+.kq-alerta__acciones { display: flex; gap: 10px; flex-wrap: wrap; } .kq-alerta__acciones .kq-btn { flex: 1 1 200px; padding: 16px; font-size: 1rem; }
+.kq-alerta__acciones .kq-btn--sec { color: #334155; }
+@media (max-width: 480px) { .kq-alerta__datos div { grid-template-columns: 1fr; gap: 0; } }
+@media (prefers-reduced-motion: reduce) { .kq-alerta { animation: none; } .kq-toast { transition: none; } }

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kunaq | Red de Salud Rural</title>
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <link rel="stylesheet" href="../assets/kunaq-core.css">
+    <style>
+        :root { --bg: #061A44; --bg2: #0B2A66; --cyan: #3FE0FF; --blue: #1E90FF; --teal: #1DD3B0; --text: #F8FAFC; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; padding: 28px 16px;
+               background: radial-gradient(ellipse at 15% 0%, #14449A 0%, transparent 55%), radial-gradient(ellipse at 100% 100%, #0A5E8C 0%, transparent 50%), linear-gradient(160deg, var(--bg2), var(--bg)); background-attachment: fixed; }
+        .layout { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 24px; align-items: start; }
+        .container { text-align: center; background: rgba(255,255,255,0.05); padding: 32px 28px; border-radius: 20px; border: 1px solid rgba(63,224,255,0.22); backdrop-filter: blur(10px); }
+        .logo { width: 230px; max-width: 80%; margin-bottom: 8px; }
+        h2 { margin: 6px 0 4px; font-size: 1.5rem; } .container p { margin: 0 0 14px; color: #B8CCEE; }
+        .btn { display: block; width: 100%; padding: 15px; margin: 12px 0; border-radius: 10px; font-weight: bold; cursor: pointer; text-decoration: none; font-size: 1.05rem; box-sizing: border-box; }
+        .btn-medico { background: linear-gradient(90deg, var(--blue), var(--cyan)); color: #04122E; border: none; }
+        .btn-paciente { background: transparent; color: var(--cyan); border: 2px solid var(--cyan); }
+        .btn:hover { filter: brightness(1.1); }
+
+        /* Panel de red (solo personal de salud) */
+        .red { background: rgba(6, 26, 68, .55); border: 1px solid rgba(63,224,255,.22); border-radius: 20px; padding: 26px; backdrop-filter: blur(10px); }
+        .red h3 { margin: 0 0 4px; font-size: 1.2rem; } .red .sub { margin: 0 0 18px; color: #A9BEDF; font-size: .92rem; max-width: 62ch; }
+        .red h4 { margin: 22px 0 10px; font-size: 1rem; color: #CFE3FF; }
+        .fila { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .campo { display: grid; gap: 4px; flex: 1 1 200px; } .campo label { font-size: .82rem; color: #A9BEDF; }
+        .red input[type=text], .red input[type=password], .red input[type=number], .red select { width: 100%; padding: 11px 12px; border-radius: 8px; border: 1px solid #2B4A82; background: #0A2150; color: #fff; font-size: .98rem; margin: 0; }
+        .red input:focus, .red select:focus { border-color: var(--cyan); outline: none; }
+        .caps { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin-top: 6px; }
+        .caps label { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.06); padding: 9px 12px; border-radius: 8px; font-size: .9rem; cursor: pointer; color: #E2ECFF; }
+        .red .kq-btn { padding: 11px 16px; } .btn-cian { background: linear-gradient(90deg, var(--blue), var(--cyan)); color: #04122E; }
+        .kq-btn--sec { color: #CFE3FF; }
+        .mio { background: rgba(63,224,255,.08); border: 1px solid rgba(63,224,255,.3); border-radius: 12px; padding: 16px; }
+        .mio strong { font-size: 1.05rem; } .mio p { margin: 4px 0 0; color: #B8CCEE; font-size: .9rem; }
+        .barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+        .barra label { font-size: .88rem; color: #CFE3FF; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        details { margin-top: 20px; border-top: 1px solid rgba(255,255,255,.12); padding-top: 14px; } summary { cursor: pointer; color: #CFE3FF; font-weight: 600; }
+        .nota { font-size: .82rem; color: #8BA3CB; margin: 8px 0 0; }
+        .candado { text-align: left; } .candado .fila { margin-top: 12px; }
+        #err-clave { color: #FCA5A5; font-size: .88rem; margin-top: 8px; display: none; }
+        [hidden] { display: none !important; }
+        @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="container">
+            <img src="../assets/kunaq-logo.png" alt="Kunaq, salud conectada" class="logo">
+            <h2>Sistema Kunaq</h2>
+            <p>Seleccione su portal de acceso</p>
+
+            <a href="admin.html" class="btn btn-medico">⚕️ Panel Médico / Hospital</a>
+            <a href="paciente.html" id="enlace-paciente" class="btn btn-paciente">📱 Carnet Paciente (Móvil)</a>
+        </div>
+
+        <!-- RED DE EQUIPOS VINCULADOS (solo personal de salud; no existe en el portal del paciente) -->
+        <section class="red" aria-labelledby="t-red">
+            <h3 id="t-red">🔗 Red de equipos vinculados</h3>
+
+            <div id="candado" class="candado">
+                <p class="sub">Aquí se registra esta PC como posta u hospital y se ve qué equipos están conectados. Es solo para personal de salud.</p>
+                <div class="fila">
+                    <div class="campo" id="campo-usuario" hidden><label for="usuario-personal">Usuario</label><input type="text" id="usuario-personal" autocomplete="username" autocapitalize="none" spellcheck="false"></div>
+                    <div class="campo"><label for="clave-personal" id="lbl-clave">Clave del personal</label><input type="password" id="clave-personal" placeholder="Clave de práctica (0000)" autocomplete="off"></div>
+                    <button type="button" class="kq-btn btn-cian" id="btn-entrar" style="align-self:flex-end">Entrar</button>
+                </div>
+                <p id="err-clave">Clave incorrecta.</p>
+                <p class="nota" id="nota-login" hidden></p>
+            </div>
+
+            <div id="contenido" hidden>
+                <div id="barra-sesion" class="fila" hidden style="justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <span class="nota" style="margin:0">👤 <strong id="sesion-nombre"></strong> · <span id="sesion-rol"></span></span>
+                    <button type="button" class="kq-btn kq-btn--sec" id="btn-salir">Cerrar sesión</button>
+                </div>
+                <details id="panel-cuentas" hidden>
+                    <summary>👥 Cuentas del personal (solo administrador)</summary>
+                    <div class="fila" style="margin-top:12px">
+                        <div class="campo"><label for="nc-usuario">Usuario</label><input type="text" id="nc-usuario" maxlength="30" autocapitalize="none" placeholder="ej.: enfermera.rosa"></div>
+                        <div class="campo"><label for="nc-nombre">Nombre</label><input type="text" id="nc-nombre" maxlength="60"></div>
+                        <div class="campo"><label for="nc-clave">Contraseña (mín. 8)</label><input type="password" id="nc-clave" autocomplete="new-password"></div>
+                        <div class="campo" style="flex-basis:140px"><label for="nc-rol">Rol</label><select id="nc-rol"><option value="personal">Personal</option><option value="admin">Administrador</option></select></div>
+                        <button type="button" class="kq-btn btn-cian" id="btn-crear-cuenta" style="align-self:flex-end">Crear / actualizar</button>
+                    </div>
+                    <p class="nota">Si el usuario ya existe, se cambia su contraseña y se cierran sus sesiones.</p>
+                    <div id="lista-cuentas"></div>
+                </details>
+                <p class="sub">Cada PC con Kunaq se registra aquí. Cuando una posta envía una emergencia, el sistema elige el hospital con los mejores implementos y le salta una alerta en su equipo.</p>
+                <div class="barra">
+                    <div id="estado-conexion" class="kq-estado"></div>
+                    <div class="fila">
+                        <label><input type="checkbox" id="chk-offline"> Simular sin internet</label>
+                        <button type="button" class="kq-btn kq-btn--sec" id="btn-sync">Sincronizar ahora</button>
+                    </div>
+                </div>
+
+                <h4>Este equipo</h4>
+                <div id="mi-equipo"></div>
+
+                <h4>Equipos vinculados</h4>
+                <div id="lista-equipos" class="kq-disp-lista"></div>
+
+                <details>
+                    <summary>Conexión con la nube y alertas</summary>
+                    <div class="fila" style="margin-top:12px">
+                        <div class="campo"><label for="cfg-modo">Nube</label>
+                            <select id="cfg-modo"><option value="simulada">Simulada (solo este navegador, para practicar)</option><option value="http">Servidor real (servidor_nube.py)</option></select></div>
+                        <div class="campo"><label for="cfg-url">Dirección del servidor</label><input type="text" id="cfg-url" placeholder="http://192.168.1.20:8765"></div>
+                        <div class="campo"><label for="cfg-token">Código de red (opcional, heredado)</label><input type="password" id="cfg-token" autocomplete="off"></div>
+                    </div>
+                    <div class="fila" style="margin-top:12px">
+                        <button type="button" class="kq-btn btn-cian" id="btn-cfg">Guardar y probar conexión</button>
+                        <button type="button" class="kq-btn kq-btn--sec" id="btn-sonido">🔔 Activar sonido de alertas</button>
+                    </div>
+                    <p class="nota">Con internet débil el sistema sigue funcionando: guarda todo en este equipo y lo envía solo cuando hay señal.</p>
+                </details>
+            </div>
+        </section>
+    </div>
+
+    <script src="../assets/kunaq-core.js"></script>
+    <script>
+        // --- BASE DE DATOS LOCAL + SINCRONIZACIÓN ---
+        // KunaqCore crea la base local la primera vez (pacientes e inventario de 20 medicamentos)
+        // y arranca el motor que la sincroniza con la nube cuando hay señal.
+        const app = KunaqCore.iniciar();
+        const { UI, esc, CAPACIDADES, TIPOS, CATEGORIAS_MINSA } = KunaqCore;
+        const $ = (id) => document.getElementById(id);
+        // Si el portal del paciente está en OTRO servicio (producción), el servidor informa su dirección.
+        // En modo "hospital" sin dirección configurada, se oculta el enlace (esta web no sirve paciente.html).
+        if (/^https?:/.test(location.protocol)) {
+            fetch('/api/ping', { cache: 'no-store' }).then((r) => r.json()).then((p) => {
+                const a = document.getElementById('enlace-paciente');
+                if (p.url_paciente) a.href = p.url_paciente; else if (p.modo === 'hospital') a.hidden = true;
+            }).catch(() => {});
+        }
+        const CLAVE_PERSONAL = "0000";   // SOLO práctica: se usa únicamente cuando el servidor no exige cuentas (modo demostración)
+        const { Sesion } = KunaqCore;
+        const web = /^https?:/.test(location.protocol);
+        let loginServidor = false;       // true cuando el servidor exige usuario y contraseña
+        let ubicacion = null;
+
+        // ---- candado de personal ----
+        const abierto = () => !!Sesion.leer() || (!loginServidor && sessionStorage.getItem('kunaq_staff') === '1');
+        function mostrarPanel() {
+            $('candado').hidden = abierto(); $('contenido').hidden = !abierto();
+            const s = Sesion.leer();
+            $('barra-sesion').hidden = !s; $('panel-cuentas').hidden = !(s && s.rol === 'admin');
+            if (s) { $('sesion-nombre').textContent = s.nombre; $('sesion-rol').textContent = s.rol === 'admin' ? 'Administrador' : 'Personal'; if (s.rol === 'admin') pintarCuentas(); }
+            if (abierto()) { pintarMiEquipo(); pintarLista(); }
+        }
+        // ¿El servidor exige cuentas? (si no hay señal, se recuerda la última respuesta)
+        async function detectarLogin() {
+            if (!web) return;
+            const r = await Sesion.requiere(location.origin);
+            if (r !== null) localStorage.setItem('kunaq_req_login', r ? '1' : '0');
+            loginServidor = r === null ? localStorage.getItem('kunaq_req_login') === '1' : r;
+            $('campo-usuario').hidden = !loginServidor;
+            $('lbl-clave').textContent = loginServidor ? 'Contraseña' : 'Clave del personal';
+            $('clave-personal').placeholder = loginServidor ? '' : 'Clave de práctica (0000)';
+            $('nota-login').hidden = !loginServidor;
+            $('nota-login').textContent = 'Inicie sesión con la cuenta que le dio el administrador. La sesión queda guardada en este equipo para trabajar sin internet.';
+            mostrarPanel();
+        }
+        $('btn-entrar').onclick = async () => {
+            const err = $('err-clave'), btn = $('btn-entrar'); err.style.display = 'none';
+            if (!loginServidor) {                                   // práctica (sin servidor que exija cuentas)
+                if ($('clave-personal').value === CLAVE_PERSONAL) { sessionStorage.setItem('kunaq_staff', '1'); mostrarPanel(); }
+                else { err.textContent = 'Clave incorrecta.'; err.style.display = 'block'; }
+                return;
+            }
+            btn.disabled = true;
+            try {
+                const r = await Sesion.entrar(location.origin, $('usuario-personal').value, $('clave-personal').value);
+                if (r.ok) {
+                    $('clave-personal').value = '';
+                    app.cambiarConfig({ modo: 'http', url: location.origin, token: r.token });   // el motor usa esta sesión para sincronizar
+                    mostrarPanel(); app.despertar();
+                } else { err.textContent = r.error || 'Usuario o contraseña incorrectos.'; err.style.display = 'block'; }
+            } catch (e) { err.textContent = 'No se pudo contactar al servidor. Revise su señal e intente de nuevo.'; err.style.display = 'block'; }
+            finally { btn.disabled = false; }
+        };
+        $('btn-salir').onclick = async () => {
+            const p = app.estado().pendientes || 0;
+            if (p && !confirm('Hay ' + p + ' cambio(s) sin enviar a la nube. Se conservarán en este equipo y se enviarán cuando vuelva a iniciar sesión. ¿Cerrar sesión?')) return;
+            await Sesion.salir(location.origin);
+            app.cambiarConfig({ token: '' }); mostrarPanel();
+        };
+        // ---- cuentas del personal (solo administrador) ----
+        async function pintarCuentas() {
+            try {
+                const r = await Sesion.api(location.origin, '/api/personal/lista');
+                const yo = (Sesion.leer() || {}).usuario;
+                $('lista-cuentas').innerHTML = '<table style="width:100%;font-size:.88rem"><tbody>' + (r.usuarios || []).map((u) =>
+                    `<tr><td>${esc(u.usuario)}</td><td>${esc(u.nombre)}</td><td>${esc(u.rol)}</td><td>${u.activo ? 'activa' : 'desactivada'}</td>` +
+                    `<td>${u.activo && u.usuario !== yo ? `<button type="button" class="kq-btn kq-btn--sec" data-desactivar="${esc(u.usuario)}">Desactivar</button>` : ''}</td></tr>`).join('') + '</tbody></table>';
+            } catch (e) { $('lista-cuentas').textContent = 'No se pudo cargar la lista (sin señal).'; }
+        }
+        $('lista-cuentas').addEventListener('click', async (e) => {
+            const u = e.target.dataset && e.target.dataset.desactivar; if (!u || !confirm('¿Desactivar la cuenta ' + u + '?')) return;
+            await Sesion.api(location.origin, '/api/personal/desactivar', { usuario: u }); pintarCuentas();
+        });
+        $('btn-crear-cuenta').onclick = async () => {
+            try {
+                const r = await Sesion.api(location.origin, '/api/personal/crear', { usuario: $('nc-usuario').value, nombre: $('nc-nombre').value, clave: $('nc-clave').value, rol: $('nc-rol').value });
+                if (r.ok) { UI.toast('Cuenta guardada.'); ['nc-usuario', 'nc-nombre', 'nc-clave'].forEach((x) => $(x).value = ''); pintarCuentas(); }
+                else UI.toast(r.error || 'No se pudo guardar la cuenta.', 'error');
+            } catch (e) { UI.toast('Sin conexión con el servidor.', 'error'); }
+        };
+        $('clave-personal').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-entrar').click(); });
+
+        // ---- este equipo ----
+        function pintarMiEquipo() {
+            const yo = app.identidad, cont = $('mi-equipo');
+            if (yo) {
+                cont.innerHTML = `<div class="mio"><strong>${esc(yo.nombre)}</strong><p>${esc(TIPOS[yo.tipo])} · Categoría ${esc(yo.categoria)}</p>
+                    ${yo.tipo === 'HOSPITAL' ? `<div class="fila" style="margin-top:12px"><div class="campo" style="max-width:220px"><label for="mi-uci">Camas UCI libres ahora</label><input type="number" min="0" id="mi-uci" value="${yo.camas_uci | 0}"></div>
+                    <button type="button" class="kq-btn kq-btn--sec" id="btn-uci" style="align-self:flex-end">Actualizar</button></div>` : ''}
+                    <div class="fila" style="margin-top:12px"><button type="button" class="kq-btn kq-btn--sec" id="btn-desvincular">Desvincular este equipo</button></div></div>`;
+                if ($('btn-uci')) $('btn-uci').onclick = () => { app.actualizarEquipo({ camas_uci: Math.max(0, $('mi-uci').value | 0) }); UI.toast('Camas UCI actualizadas. Las postas verán el cambio en cuanto haya señal.'); };
+                $('btn-desvincular').onclick = () => { if (confirm('¿Desvincular este equipo de la red?')) { app.desvincular(); UI.toast('Equipo desvinculado.', 'aviso'); } };
+                return;
+            }
+            cont.innerHTML = `
+                <div class="fila">
+                    <div class="campo"><label for="eq-nombre">Nombre del establecimiento</label><input type="text" id="eq-nombre" maxlength="60" placeholder="Ej.: Posta de Salud Laredo"></div>
+                    <div class="campo"><label for="eq-tipo">Tipo</label><select id="eq-tipo">${Object.entries(TIPOS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></div>
+                    <div class="campo" style="flex-basis:120px"><label for="eq-cat">Categoría MINSA</label><select id="eq-cat">${CATEGORIAS_MINSA.map((c) => `<option>${c}</option>`).join('')}</select></div>
+                </div>
+                <div id="bloque-hospital" hidden>
+                    <div class="fila" style="margin-top:12px"><div class="campo" style="max-width:220px"><label for="eq-uci">Camas UCI libres</label><input type="number" min="0" id="eq-uci" value="0"></div></div>
+                    <p class="nota" style="margin-top:12px">Implementos con los que cuenta este hospital:</p>
+                    <div class="caps">${Object.entries(CAPACIDADES).map(([k, v]) => `<label><input type="checkbox" name="cap" value="${k}"> ${v}</label>`).join('')}</div>
+                </div>
+                <div class="fila" style="margin-top:14px">
+                    <button type="button" class="kq-btn kq-btn--sec" id="btn-ubic">📍 Usar mi ubicación</button><span id="txt-ubic" class="nota" style="margin:0">Opcional: sirve para elegir el hospital más cercano.</span>
+                </div>
+                <label class="nota" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="eq-demo"> Modo demostración: este equipo vale solo para esta pestaña (para probar con dos pestañas en una misma PC)</label>
+                <div class="fila" style="margin-top:14px"><button type="button" class="kq-btn btn-cian" id="btn-vincular">Vincular esta PC</button></div>`;
+            const alternar = () => { $('bloque-hospital').hidden = $('eq-tipo').value !== 'HOSPITAL'; };
+            $('eq-tipo').onchange = alternar; alternar();
+            $('btn-ubic').onclick = () => {
+                if (!navigator.geolocation) return UI.toast('Este navegador no permite obtener la ubicación.', 'aviso');
+                navigator.geolocation.getCurrentPosition((p) => { ubicacion = { lat: +p.coords.latitude.toFixed(5), lng: +p.coords.longitude.toFixed(5) };
+                    $('txt-ubic').textContent = `Ubicación guardada (${ubicacion.lat}, ${ubicacion.lng})`; },
+                    () => UI.toast('No se pudo obtener la ubicación. Puede continuar sin ella.', 'aviso'), { timeout: 8000 });
+            };
+            $('btn-vincular').onclick = () => {
+                const nombre = $('eq-nombre').value.trim();
+                if (!nombre) { UI.toast('Escriba el nombre del establecimiento.', 'error'); return $('eq-nombre').focus(); }
+                const tipo = $('eq-tipo').value;
+                const capacidades = tipo === 'HOSPITAL' ? [...document.querySelectorAll('input[name=cap]:checked')].map((c) => c.value) : [];
+                app.vincular({ nombre, tipo, categoria: $('eq-cat').value, capacidades, camas_uci: tipo === 'HOSPITAL' ? $('eq-uci').value : 0, ...(ubicacion || {}) }, $('eq-demo').checked);
+                UI.toast('Equipo vinculado a la red Kunaq.'); pintarMiEquipo(); pintarLista();
+            };
+        }
+
+        // ---- equipos vinculados ----
+        function pintarLista() { const yo = app.identidad; $('lista-equipos').innerHTML = UI.tarjetasDispositivos(app.db.dispositivos, yo && yo.id); }
+        app.ev.on('dispositivos', () => { if (abierto()) pintarLista(); });
+        app.ev.on('identidad', () => { if (abierto()) { pintarMiEquipo(); pintarLista(); } });
+        setInterval(() => { if (abierto()) pintarLista(); }, 10000);
+
+        // ---- conexión ----
+        UI.montarEstado($('estado-conexion'), app);
+        $('chk-offline').checked = app.config.forzarOffline;
+        $('chk-offline').onchange = (e) => { app.setForzarOffline(e.target.checked); UI.toast(e.target.checked ? 'Sin internet simulado: todo se guarda en este equipo.' : 'Internet restablecido: enviando lo pendiente…', 'aviso'); };
+        $('btn-sync').onclick = () => { app.despertar(); UI.toast('Sincronizando…'); };
+        $('cfg-modo').value = app.config.modo; $('cfg-url').value = app.config.url; $('cfg-token').value = Sesion.leer() ? '' : app.config.token;
+        if (Sesion.leer()) $('cfg-token').placeholder = '(sesión iniciada)';
+        $('btn-cfg').onclick = async () => {
+            app.cambiarConfig({ modo: $('cfg-modo').value, url: $('cfg-url').value.trim(), token: $('cfg-token').value || (Sesion.leer() || {}).token || '' });
+            await new Promise((r) => setTimeout(r, 1800)); const s = app.estado();
+            UI.toast(s.nivel === 'sin_conexion' ? 'No se pudo conectar: ' + (s.error || 'revise la dirección') : 'Conexión lista (' + (s.modo === 'http' ? 'servidor real' : 'nube simulada') + ').', s.nivel === 'sin_conexion' ? 'error' : 'ok');
+        };
+        $('btn-sonido').onclick = () => { KunaqCore.alerta.sirena.prueba(); if (window.Notification && Notification.permission === 'default') Notification.requestPermission(); UI.toast('Sonido activado. Así sonará una emergencia.'); };
+
+        mostrarPanel();
+        detectarLogin();
+    </script>
+</body>
+</html>

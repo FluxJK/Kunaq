@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mi Salud | Kunaq Paciente</title>
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <style>
+        :root {
+            --bg-dark: #061A44;
+            --text-light: #F8FAFC;
+            --cyan-neon: #3FE0FF;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(0, 242, 254, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        
+        body {
+            background: radial-gradient(ellipse at 20% 0%, #14449A 0%, transparent 55%), linear-gradient(170deg, #0B2A66, var(--bg-dark)) fixed;
+            color: var(--text-light);
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+
+        /* HEADER MÓVIL */
+        header {
+            width: 100%; padding: 20px; text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(6, 26, 68, 0.88); backdrop-filter: blur(10px);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo-kunaq { width: 64px; height: 64px; margin-bottom: 6px; }
+        header h2 { font-size: 1.15rem; }
+
+        /* CONTENEDOR PRINCIPAL */
+        .container { width: 90%; max-width: 400px; margin-top: 30px; }
+
+        /* LOGIN PACIENTE */
+        #login-section {
+            background: var(--card-bg); padding: 30px 20px; border-radius: 15px;
+            border: 1px solid var(--border-color); text-align: center;
+        }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #8BA3CB; }
+        .input-group input {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155;
+            background: #1E293B; color: white; font-size: 1rem; outline: none;
+        }
+        .input-group input:focus { border-color: var(--cyan-neon); }
+        
+        .btn {
+            width: 100%; padding: 14px; background: linear-gradient(90deg, #1E90FF, var(--cyan-neon));
+            color: #000; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 1rem; margin-top: 10px;
+        }
+
+        /* DASHBOARD HISTORIAL (Oculto inicio) */
+        #dashboard-section { display: none; }
+        .paciente-info { margin-bottom: 20px; padding: 15px; background: #1E293B; border-radius: 10px; border-left: 4px solid var(--cyan-neon); }
+        
+        .historial-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 15px; margin-bottom: 15px;
+        }
+        .historial-card h4 { color: var(--cyan-neon); margin-bottom: 10px; display: flex; justify-content: space-between;}
+        .historial-card p { font-size: 0.9rem; margin-bottom: 5px; color: #CBD5E1; }
+        .historial-card .resaltado { color: #fff; font-weight: bold; }
+        .cita-futura { border-left: 4px solid #F59E0B; } /* Naranja para cita próxima */
+
+        #error-msg { color: #EF4444; font-size: 0.9rem; margin-top: 10px; display: none; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="../assets/kunaq-mark.png" alt="Kunaq" class="logo-kunaq">
+        <h2>Carnet Digital Kunaq</h2>
+    </header>
+
+    <div class="container">
+        <!-- SECCIÓN DE LOGIN -->
+        <section id="login-section">
+            <h3>Acceso de Pacientes</h3>
+            <p style="font-size: 0.85rem; color: #8BA3CB; margin-bottom: 20px;">Ingrese los datos provistos por el hospital</p>
+            
+            <div class="input-group">
+                <label for="dni">Número de DNI</label>
+                <input type="text" id="dni" placeholder="Ej: 70123456" inputmode="numeric" maxlength="12" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label for="pin">PIN de Seguridad (4 a 6 dígitos)</label>
+                <input type="password" id="pin" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="off">
+            </div>
+
+            <button class="btn" id="btn-entrar" onclick="iniciarSesion()">Ver mi Historial</button>
+            <p id="error-msg">DNI o PIN incorrecto.</p>
+        </section>
+
+        <!-- SECCIÓN DEL HISTORIAL MÉDICO -->
+        <section id="dashboard-section">
+            <div class="paciente-info">
+                <h3 id="nombre-paciente">Cargando...</h3>
+                <p>DNI: <span id="dni-paciente"></span></p>
+            </div>
+
+            <h3>Últimas Consultas</h3><br>
+            <div id="lista-historial">
+                <!-- Las tarjetas se inyectarán aquí con JavaScript -->
+            </div>
+            
+            <button class="btn" onclick="cerrarSesion()" style="background: transparent; color: var(--cyan-neon); border: 1px solid var(--cyan-neon);">Cerrar Sesión</button>
+        </section>
+    </div>
+
+    <script>
+        // Esta página NO contiene datos de pacientes. Pregunta al servidor (POST /api/paciente/consulta):
+        // el servidor valida DNI + PIN, limita los intentos y devuelve SOLO el historial de ese paciente.
+        const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g,
+            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const $ = (id) => document.getElementById(id);
+        let consultando = false;
+
+        // La atención llega como texto "Diagnóstico: ... | Receta: ..." codificado en Base64
+        function aFicha(h) {
+            let texto = '';
+            try { texto = decodeURIComponent(atob(h.datos_cifrados)); } catch (e) { texto = ''; }
+            const m = texto.match(/Diagn[oó]stico:\s*(.*?)\s*\|\s*Receta:\s*(.*)$/);
+            return { fecha: h.fecha, hora: '', hospital: h.hospital, doctor: 'Personal de salud',
+                     diagnostico: m ? m[1] : (texto || 'Sin detalle'), receta: (m && m[2]) || 'Sin receta', proxima_cita: 'Ninguna' };
+        }
+
+        async function consultarNube(dni, pin) {
+            const r = await fetch('/api/paciente/consulta', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dni, pin }), cache: 'no-store'
+            });
+            const d = await r.json();
+            if (!d.ok) return { ok: false, error: d.error || 'DNI o PIN incorrectos.' };
+            return { ok: true, nombre: d.nombre, historial: d.atenciones.map(aFicha) };
+        }
+
+        // Solo para practicar abriendo el archivo con doble clic (file://): lee la ficha guardada por la posta en este mismo equipo.
+        function consultarLocal(dni, pin) {
+            try {
+                const local = JSON.parse(localStorage.getItem('kunaq_db') || 'null');
+                const p = local && local.pacientes.find((x) => x.dni === dni);
+                if (!p || p.pin !== pin) return { ok: false, error: 'DNI o PIN incorrectos.' };
+                return { ok: true, nombre: p.nombre, historial: p.historial.slice().reverse().map(aFicha) };
+            } catch (e) { return { ok: false, error: 'DNI o PIN incorrectos.' }; }
+        }
+
+        async function iniciarSesion() {
+            if (consultando) return;
+            const dni = $('dni').value.trim(), pin = $('pin').value.trim();
+            const errorMsg = $('error-msg');
+            errorMsg.style.display = 'none';
+            consultando = true; $('btn-entrar').disabled = true; $('btn-entrar').textContent = 'Consultando…';
+            let r;
+            try {
+                r = location.protocol === 'file:' ? consultarLocal(dni, pin) : await consultarNube(dni, pin);
+            } catch (e) {
+                r = { ok: false, error: 'No hay conexión con el servidor. Revise su señal e intente de nuevo.' };
+            }
+            consultando = false; $('btn-entrar').disabled = false; $('btn-entrar').textContent = 'Ver mi Historial';
+            if (!r.ok) { errorMsg.textContent = r.error; errorMsg.style.display = 'block'; return; }
+            mostrarDashboard(dni, r);
+        }
+
+        function mostrarDashboard(dni, datos) {
+            $('login-section').style.display = 'none';
+            $('dashboard-section').style.display = 'block';
+            $('nombre-paciente').textContent = datos.nombre;
+            $('dni-paciente').textContent = dni;
+            // Función de orden superior: map() para renderizar el historial (todo texto se escapa: no se ejecuta HTML)
+            $('lista-historial').innerHTML = datos.historial.length ? datos.historial.map((cita) => {
+                const esFutura = cita.proxima_cita !== 'Ninguna' ? 'cita-futura' : '';
+                return `
+                <div class="historial-card ${esFutura}">
+                    <h4>📅 ${esc(cita.fecha)} <span>${esc(cita.hora)}</span></h4>
+                    <p>🏥 <span class="resaltado">Hospital:</span> ${esc(cita.hospital)}</p>
+                    <p>👨‍⚕️ <span class="resaltado">Atendido por:</span> ${esc(cita.doctor)}</p>
+                    <p>📋 <span class="resaltado">Motivo/Diagnóstico:</span> ${esc(cita.diagnostico)}</p>
+                    <p>💊 <span class="resaltado">Receta:</span> ${esc(cita.receta)}</p>
+                    <hr style="border: 0; border-top: 1px solid #334155; margin: 10px 0;">
+                    <p style="color: #F59E0B;">⏰ <span class="resaltado">Próxima cita:</span> ${esc(cita.proxima_cita)}</p>
+                </div>`;
+            }).join('') : '<p>Aún no tiene consultas registradas.</p>';
+        }
+
+        function cerrarSesion() {
+            $('dni').value = ''; $('pin').value = '';
+            $('lista-historial').innerHTML = ''; $('nombre-paciente').textContent = '';
+            $('login-section').style.display = 'block';
+            $('dashboard-section').style.display = 'none';
+        }
+        ['dni', 'pin'].forEach((id) => $(id).addEventListener('keydown', (e) => { if (e.key === 'Enter') iniciarSesion(); }));
+    </script>
+</body>
+</html>
