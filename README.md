@@ -1,4 +1,8 @@
-# Kunaq v2 · Red de Salud Rural
+<p align="center">
+  <img src="assets/logo.png" alt="Kunaq Logo" width="500">
+</p>
+
+# Kunaq · Red de Salud Rural
 
 Mismo proyecto (HTML + clases + funciones de orden superior + SQLite/Python), ahora con
 **inventario de 20 medicamentos**, **sincronización con la nube pensada para internet débil**
@@ -88,9 +92,4 @@ scripts/semilla_db.py     Ahora también siembra los 20 medicamentos
 sw.js                Páginas disponibles sin internet
 ```
 
-## Límites actuales (para mencionar en la exposición)
-- Cifrado: en el navegador sigue siendo una codificación Base64 (didáctica). La protección real está en el servidor: los nombres y datos clínicos se guardan **cifrados con Fernet (`KUNAQ_LLAVE`)** en la base, y el tráfico va por HTTPS (Render lo da). Si alguien copiara la base de datos, no vería esos datos.
-- El DNI se envía como SHA-256; un DNI tiene pocas combinaciones, así que en producción conviene HMAC con clave secreta.
-- El personal inicia sesión con **cuenta propia** (contraseña guardada como hash PBKDF2, sesión con token que vence a las 24 h, bloqueo tras 5 fallos). La clave `0000` solo existe en modo práctica, cuando el servidor no exige cuentas.
-- `sw.js` (abrir sin internet) solo funciona con HTTPS o localhost: en Render sí; en `http://192.168.x.x` no.
-- Con servidor real, `admin.html` rebota a la portada si no hay sesión; la seguridad real de los datos la dan las cuentas, el cifrado y HTTPS.
+
