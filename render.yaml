@@ -1,0 +1,60 @@
+# Blueprint de Render: crea TODO de una vez (2 servicios web + 1 base PostgreSQL).
+# Render → New → Blueprint → elija su repositorio de GitHub → Apply.
+databases:
+  - name: kunaq-db
+    databaseName: kunaq
+    user: kunaq
+    plan: free            # la base gratuita de Render EXPIRA a los 30 días (ver README)
+
+envVarGroups:
+  - name: kunaq-secretos  # compartido por los dos servicios: el MISMO pepper en ambos
+    envVars:
+      - key: KUNAQ_PEPPER     # protege los DNI en la base
+        generateValue: true
+      - key: KUNAQ_LLAVE      # cifra nombres y datos clínicos en la base (¡guárdela aparte!)
+        generateValue: true
+
+services:
+  # ---------- Portal del PERSONAL DE SALUD (postas y hospitales) ----------
+  - type: web
+    name: kunaq-hospital
+    runtime: python
+    plan: free            # gratis se "duerme" a los 15 min sin uso; para emergencias reales use un plan de pago
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server/servidor_nube.py
+    healthCheckPath: /api/ping
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: KUNAQ_MODO
+        value: hospital
+      - key: KUNAQ_ADMIN_USUARIO
+        value: admin
+      - key: KUNAQ_ADMIN_CLAVE  # Render le pedirá escribirla al aplicar el Blueprint (mínimo 8 caracteres)
+        sync: false
+      - key: KUNAQ_URL_PACIENTE # si cambia el nombre del servicio del paciente, cambie esta dirección
+        value: https://kunaq-paciente.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kunaq-db
+          property: connectionString
+      - fromGroup: kunaq-secretos
+
+  # ---------- Portal de PACIENTES (solo DNI + PIN) ----------
+  - type: web
+    name: kunaq-paciente
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server/servidor_nube.py
+    healthCheckPath: /api/ping
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: KUNAQ_MODO
+        value: paciente
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kunaq-db
+          property: connectionString
+      - fromGroup: kunaq-secretos

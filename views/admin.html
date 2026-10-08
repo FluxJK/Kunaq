@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kunaq | Panel Médico</title>
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <link rel="stylesheet" href="../assets/kunaq-core.css">
+    <style>
+        :root { --bg: #EEF4FA; --primary: #0369C9; --primary-osc: #0B2A66; --text: #0F172A; --borde: #D3E0EE; --suave: #5B6B82; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0 0 40px; }
+        header { background: linear-gradient(100deg, #061A44, #0B3A8A); color: #fff; padding: 12px 24px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .marca { display: flex; align-items: center; gap: 14px; } .marca img { width: 52px; height: 52px; }
+        header h2 { margin: 0; font-size: 1.2rem; } header .lema { margin: 2px 0 0; font-size: .82rem; color: #A9C8F5; }
+        .acciones { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: .88rem; }
+        .acciones a { color: #8FE9FF; font-weight: 600; } .acciones label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: #D6E6FF; }
+        main { padding: 0 24px; max-width: 1280px; margin: 0 auto; }
+        .grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+        .card { background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--borde); box-shadow: 0 1px 2px rgba(15,23,42,.05); }
+        .card h3 { margin: 0 0 4px; font-size: 1.1rem; } .card .sub { margin: 0 0 12px; color: var(--suave); font-size: .88rem; }
+        .ancho { grid-column: 1 / -1; }
+        input, button, select, textarea { width: 100%; padding: 10px; margin-top: 10px; box-sizing: border-box; border-radius: 5px; border: 1px solid #B9C7D9; font: inherit; }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(3,105,201,.18); }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; } button:hover { filter: brightness(1.08); }
+        .alert { background: #FEE2E2; color: #991B1B; padding: 10px; border-radius: 5px; display: none; margin-top:10px;}
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border-bottom: 1px solid #E3EBF4; padding: 8px; text-align: left; vertical-align: middle; }
+        th { background-color: var(--primary); color: white; position: sticky; top: 0; z-index: 1; font-size: .85rem; }
+        .btns { display: flex; gap: 8px; flex-wrap: wrap; } .btns button { width: auto; flex: 1 1 140px; }
+        .btn-gris { background: #64748B; } .btn-verde { background: #0E9F6E; } .btn-chico { width: 34px; height: 34px; padding: 0; margin: 0; font-size: 1.1rem; line-height: 1; }
+        .btn-chico.menos { background: #94A3B8; } .btn-activo { outline: 3px solid rgba(3,105,201,.35); }
+
+        /* Inventario */
+        .resumen { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+        .chip { padding: 5px 12px; border-radius: 999px; font-size: .82rem; font-weight: 700; background: #E6EEF8; color: #1E3A5F; }
+        .chip.rojo { background: #FEE2E2; color: #991B1B; } .chip.ambar { background: #FEF3C7; color: #92400E; }
+        .filtros { display: grid; grid-template-columns: 1fr 190px; gap: 10px; } .filtros input, .filtros select { margin-top: 10px; }
+        .tabla-scroll { max-height: 420px; overflow: auto; border: 1px solid var(--borde); border-radius: 8px; margin-top: 12px; } .tabla-scroll table { margin: 0; }
+        .med small { display: block; color: var(--suave); }
+        .stock { display: flex; align-items: center; gap: 8px; min-width: 120px; } .stock b { min-width: 28px; }
+        .medidor { flex: 1; height: 6px; border-radius: 3px; background: #E3EBF4; overflow: hidden; min-width: 40px; } .medidor i { display: block; height: 100%; }
+        .insignia { font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+        .insignia.agotado { background: #FEE2E2; color: #991B1B; } .insignia.bajo { background: #FEF3C7; color: #92400E; } .insignia.ok { background: #DCFCE7; color: #166534; }
+        details.nuevo { margin-top: 12px; } details.nuevo summary { cursor: pointer; font-weight: 600; color: var(--primary); }
+        .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .pendientes { font-size: .85rem; color: var(--suave); margin: 10px 0 0; }
+
+        /* Emergencias */
+        .emerg { border-top: 5px solid var(--kq-rojo); }
+        .emerg h3 { color: #991B1B; }
+        .emerg-cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; }
+        .plantillas { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; } .plantillas button { width: auto; margin: 0; background: #FEE2E2; color: #991B1B; font-size: .85rem; padding: 7px 12px; border-radius: 999px; }
+        .prios { display: flex; gap: 8px; margin-top: 10px; } .prios label { flex: 1; text-align: center; padding: 9px 4px; border: 2px solid var(--borde); border-radius: 8px; cursor: pointer; font-weight: 700; font-size: .85rem; }
+        .prios input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+        .prios label:has(input:checked) { border-color: var(--kq-rojo); background: #FEE2E2; color: #991B1B; } .prios label:has(input:focus-visible) { outline: 3px solid var(--primary); }
+        .reqs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; margin-top: 8px; }
+        .reqs label { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #F1F5F9; border-radius: 8px; font-size: .88rem; cursor: pointer; } .reqs input { width: auto; margin: 0; }
+        .etq { display: block; margin-top: 14px; font-size: .85rem; font-weight: 600; color: var(--suave); }
+        .destinos { display: grid; gap: 8px; margin-top: 8px; }
+        .destino { display: block; border: 2px solid var(--borde); border-radius: 10px; padding: 12px; cursor: pointer; }
+        .destino:has(input:checked) { border-color: var(--primary); background: #EAF3FD; } .destino input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; } .destino:has(input:focus-visible) { outline: 3px solid var(--primary); }
+        .destino b { font-size: 1rem; } .destino .rec { font-size: .72rem; background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
+        .destino p { margin: 4px 0 0; font-size: .85rem; color: var(--suave); } .destino .ok { color: #166534; font-weight: 600; } .destino .falta { color: #B45309; font-weight: 600; }
+        .btn-emerg { background: var(--kq-rojo); font-size: 1.05rem; padding: 14px; margin-top: 16px; }
+        .aviso-vinculo { background: #FEF3C7; color: #78350F; padding: 12px 14px; border-radius: 8px; margin-bottom: 12px; } .aviso-vinculo a { color: #78350F; font-weight: 700; }
+        .seguimiento { display: grid; gap: 10px; margin-top: 10px; }
+        .seg { border: 1px solid var(--borde); border-left: 5px solid #94A3B8; border-radius: 8px; padding: 12px 14px; }
+        .seg.s-CONFIRMADA { border-left-color: #16A34A; } .seg.s-RECHAZADA, .seg.s-SIN_DESTINO { border-left-color: var(--kq-rojo); } .seg.s-PENDIENTE_ENVIO { border-left-color: var(--kq-ambar); background: #FFFBEB; }
+        .seg header { all: unset; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .seg .estado { font-weight: 700; font-size: .85rem; } .seg ol { margin: 8px 0 0; padding-left: 18px; font-size: .84rem; color: var(--suave); }
+        .vacio { color: var(--suave); font-size: .9rem; margin: 10px 0 0; }
+        h4.sec { margin: 22px 0 0; font-size: .95rem; }
+        @media (max-width: 960px) { .grid, .emerg-cols { grid-template-columns: minmax(0, 1fr); } .ancho { grid-column: auto; } }
+        @media (max-width: 560px) { .filtros, .dos { grid-template-columns: minmax(0, 1fr); } .card { padding: 16px; } .prios { flex-wrap: wrap; } .prios label { flex: 1 1 100px; } header { padding: 12px 14px; } main { padding: 0 12px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="marca">
+            <img src="../assets/kunaq-mark.png" alt="Kunaq">
+            <div><h2>⚕️ Hospital Regional Kunaq - Panel Médico</h2><p class="lema" id="lema-equipo">Equipo sin vincular</p></div>
+        </div>
+        <div class="acciones">
+            <div id="estado-conexion" class="kq-estado"></div>
+            <label><input type="checkbox" id="chk-offline" style="width:auto;margin:0"> Simular sin internet</label>
+            <a href="index.html">Volver al Inicio</a>
+        </div>
+    </header>
+
+    <main>
+    <div class="grid">
+        <!-- SECCIÓN 1: INVENTARIO (Uso de filter) -->
+        <div class="card">
+            <h3>📦 Inventario de Medicamentos</h3>
+            <p class="sub">Los cambios se guardan en este equipo y llegan a la nube cuando hay señal.</p>
+            <div class="resumen" id="resumen-inventario"></div>
+            <div class="filtros">
+                <input type="search" id="inv-buscar" placeholder="Buscar medicamento…" aria-label="Buscar medicamento">
+                <select id="inv-categoria" aria-label="Filtrar por categoría"></select>
+            </div>
+            <div class="btns" style="margin-top:2px">
+                <button onclick="gestor.mostrarDisponibles()" id="b-disp">Ver solo disponibles (Stock > 0)</button>
+                <button onclick="gestor.mostrarBajos()" id="b-bajo" style="background:#B45309">Stock bajo</button>
+                <button onclick="gestor.mostrarTodos()" id="b-todos" style="background: #64748B;">Ver Todos</button>
+            </div>
+            <div class="tabla-scroll"><div id="tabla-inventario"></div></div>
+            <details class="nuevo">
+                <summary>Agregar medicamento</summary>
+                <div class="dos"><input type="text" id="nm-nombre" placeholder="Nombre y dosis"><input type="text" id="nm-cat" placeholder="Categoría"></div>
+                <div class="dos"><input type="number" min="0" id="nm-stock" placeholder="Stock inicial"><input type="number" min="0" id="nm-min" placeholder="Stock mínimo"></div>
+                <div class="dos"><input type="text" id="nm-unidad" placeholder="Unidad (tabletas, ampollas…)"><input type="text" id="nm-ubic" placeholder="Ubicación"></div>
+                <button onclick="gestor.agregarMedicamento()">Agregar al inventario</button>
+            </details>
+        </div>
+
+        <!-- SECCIÓN 2: REGISTRO Y CIFRADO LEY 29733 -->
+        <div class="card">
+            <h3>📝 Registrar Atención (Offline/Local)</h3>
+            <p class="sub">Funciona sin internet. Se cifra antes de guardarse.</p>
+            <input type="text" id="reg-dni" placeholder="DNI del Paciente" inputmode="numeric">
+            <input type="text" id="reg-nombre" placeholder="Nombre del paciente (opcional)">
+            <input type="text" id="reg-diag" placeholder="Diagnóstico">
+            <input type="text" id="reg-receta" placeholder="Receta Médica">
+            <button onclick="gestor.registrarCita()">Guardar y Cifrar Datos</button>
+            <div id="aviso-pin" role="status" style="display:none; margin-top:14px; padding:12px 14px; border-radius:10px; background:#ECFDF5; border:1px solid #10B981; color:#064E3B;"></div>
+            <button onclick="gestor.sincronizar()" style="background: #10B981; margin-top: 10px;">☁️ Sincronizar a la Nube</button>
+            <p class="pendientes" id="txt-pendientes"></p>
+        </div>
+
+        <!-- SECCIÓN 3 (nueva): EMERGENCIAS -->
+        <div class="card emerg ancho">
+            <h3>🚨 Emergencia: derivar paciente a un hospital</h3>
+            <p class="sub">Elija qué necesita el paciente. El sistema recomienda el hospital con los mejores implementos y le salta una alerta en su equipo.</p>
+            <div id="aviso-vinculo" class="aviso-vinculo" hidden>Este equipo aún no está vinculado a la red. <a href="index.html">Vincúlelo en la página de inicio</a> para enviar emergencias.</div>
+            <div class="emerg-cols">
+                <div>
+                    <div class="plantillas" id="plantillas" aria-label="Casos frecuentes"></div>
+                    <div class="dos"><input type="text" id="em-paciente" placeholder="Nombre del paciente (si se conoce)"><input type="number" id="em-edad" min="0" max="120" placeholder="Edad"></div>
+                    <input type="text" id="em-dni" placeholder="DNI (opcional)" inputmode="numeric">
+                    <input type="text" id="em-cuadro" placeholder="Cuadro clínico (obligatorio)">
+                    <span class="etq">Prioridad</span>
+                    <div class="prios" id="em-prios">
+                        <label><input type="radio" name="prio" value="1" checked> I · Crítica</label>
+                        <label><input type="radio" name="prio" value="2"> II · Urgente</label>
+                        <label><input type="radio" name="prio" value="3"> III · Menor</label>
+                    </div>
+                    <span class="etq">El paciente necesita</span>
+                    <div class="reqs" id="em-reqs"></div>
+                </div>
+                <div>
+                    <span class="etq" style="margin-top:0">Hospital de destino</span>
+                    <div class="destinos" id="em-destinos"></div>
+                    <button class="btn-emerg" id="btn-emergencia" onclick="gestor.enviarEmergencia()">🚨 Enviar alerta de emergencia</button>
+                    <p class="pendientes">Sin señal, la alerta queda guardada con prioridad máxima y sale en cuanto haya conexión.</p>
+                </div>
+            </div>
+            <h4 class="sec">Seguimiento de emergencias enviadas</h4>
+            <div class="seguimiento" id="seg-enviadas"></div>
+            <h4 class="sec" id="tit-recibidas" hidden>Emergencias recibidas en este equipo</h4>
+            <div class="seguimiento" id="seg-recibidas"></div>
+        </div>
+
+        <!-- SECCIÓN 4: DESCIFRADO AUTORIZADO -->
+        <div class="card ancho">
+            <h3>🔐 Búsqueda Segura de Pacientes (Ley 29733)</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="text" id="busq-dni" placeholder="DNI a buscar" inputmode="numeric" style="flex:1 1 180px">
+                <input type="password" id="busq-clave" placeholder="Clave de práctica (0000)" style="flex:1 1 180px">
+                <button onclick="gestor.desencriptarHistorial()" style="flex:1 1 180px; width:auto">Desencriptar Historial</button>
+            </div>
+            <div id="alerta-seguridad" class="alert">⚠️ Acceso Denegado. Clave médica incorrecta.</div>
+            <div id="resultado-busqueda" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+    </main>
+
+    <script src="../assets/kunaq-core.js"></script>
+    <script>
+        // Puerta del panel médico: con servidor real hace falta una sesión del personal (si no, vuelve a la portada).
+        (async () => {
+            if (!/^https?:/.test(location.protocol) || KunaqCore.Sesion.leer()) return;
+            const exige = await KunaqCore.Sesion.requiere(location.origin);
+            if (exige !== false) location.replace('index.html');       // true, o sin señal y sin sesión previa
+        })();
+    </script>
+    <script>
+        const app = KunaqCore.iniciar();
+        const { UI, Filtros, esc, CAPACIDADES, PLANTILLAS, ControladorEmergencias } = KunaqCore;
+        const $ = (id) => document.getElementById(id);
+
+        // POO: Clase para manejar la Seguridad
+        class SeguridadKunaq {
+            cifrar(texto) { return btoa(encodeURIComponent(texto)); } // Simula AES-256
+            descifrar(texto_cifrado) { return decodeURIComponent(atob(texto_cifrado)); }
+        }
+
+        // POO: Clase Controlador Principal
+        class GestorHospital {
+            constructor() {
+                this.seguridad = new SeguridadKunaq();
+                this.vista = 'todos';          // todos | disponibles | bajos
+                this.pintarFiltrosCategoria();
+                this.mostrarTodos();
+                this.armarEmergencias();
+            }
+
+            // La base local la administra KunaqCore (se mantiene al día entre pestañas y con la nube)
+            get db() { return app.db; }
+
+            // ---------------- INVENTARIO ----------------
+            pintarFiltrosCategoria() {
+                $('inv-categoria').innerHTML = '<option value="">Todas las categorías</option>' + app.inventario.categorias().map((c) => `<option>${esc(c)}</option>`).join('');
+                $('inv-buscar').oninput = () => this.refrescarInventario();
+                $('inv-categoria').onchange = () => this.refrescarInventario();
+            }
+
+            // PROGRAMACIÓN FUNCIONAL: map() + reduce()
+            renderizarInventario(lista) {
+                const foco = document.activeElement && document.activeElement.id;   // para no perder el foco del teclado al redibujar
+                const html = lista.map(item => {
+                    const est = KunaqCore.estadoStock(item);
+                    const color = { agotado: '#DC2626', bajo: '#D97706', ok: '#16A34A' }[est];
+                    const pct = Math.min(100, Math.round(item.stock / Math.max(1, item.minimo * 3) * 100));
+                    return `
+                    <tr>
+                        <td class="med">${esc(item.nombre)}<small>${esc(item.categoria)} · ${esc(item.unidad || '')}</small></td>
+                        <td><div class="stock"><b style="color:${color}">${item.stock}</b><span class="medidor"><i style="width:${pct}%;background:${color}"></i></span>
+                            <span class="insignia ${est}">${{ agotado: 'Agotado', bajo: 'Bajo', ok: 'Normal' }[est]}</span></div></td>
+                        <td>${esc(item.ubicacion)}</td>
+                        <td><div class="btns" style="flex-wrap:nowrap">
+                            <button class="btn-chico menos" id="inv-menos-${item.id}" aria-label="Descontar una unidad de ${esc(item.nombre)}" onclick="gestor.ajustarStock(${item.id}, -1)">−</button>
+                            <button class="btn-chico" id="inv-mas-${item.id}" aria-label="Agregar una unidad de ${esc(item.nombre)}" onclick="gestor.ajustarStock(${item.id}, 1)">+</button></div></td>
+                    </tr>`;
+                }).join('');
+                $('tabla-inventario').innerHTML = lista.length
+                    ? `<table><tr><th>Medicina</th><th>Stock</th><th>Ubicación</th><th>Ajustar</th></tr>${html}</table>`
+                    : '<p class="vacio" style="padding:0 12px 12px">No hay medicamentos con ese filtro.</p>';
+                const r = KunaqCore.resumenStock(this.db.inventario);
+                $('resumen-inventario').innerHTML = `<span class="chip">${r.total} medicamentos</span><span class="chip rojo">${r.agotado} agotados</span><span class="chip ambar">${r.bajo} con stock bajo</span>`;
+                ['b-disp', 'b-bajo', 'b-todos'].forEach(id => $(id).classList.remove('btn-activo'));
+                $({ disponibles: 'b-disp', bajos: 'b-bajo', todos: 'b-todos' }[this.vista]).classList.add('btn-activo');
+                if (foco && $(foco) && foco.indexOf('inv-') === 0) $(foco).focus();
+            }
+
+            // PROGRAMACIÓN FUNCIONAL: filter() con predicados combinados
+            refrescarInventario() {
+                const porVista = { todos: () => true, disponibles: Filtros.disponible, bajos: Filtros.bajo }[this.vista];
+                const lista = this.db.inventario.filter(Filtros.todos(porVista, Filtros.texto($('inv-buscar').value), Filtros.categoria($('inv-categoria').value)));
+                this.renderizarInventario(lista);
+            }
+            mostrarDisponibles() { this.vista = 'disponibles'; this.refrescarInventario(); }
+            mostrarBajos() { this.vista = 'bajos'; this.refrescarInventario(); }
+            mostrarTodos() { this.vista = 'todos'; this.refrescarInventario(); }
+
+            ajustarStock(id, delta) { app.inventario.ajustar(id, delta); this.refrescarInventario(); }
+            agregarMedicamento() {
+                const nombre = $('nm-nombre').value.trim();
+                if (!nombre) return UI.toast('Escriba el nombre del medicamento.', 'error');
+                app.inventario.agregar({ nombre, categoria: $('nm-cat').value.trim(), stock: $('nm-stock').value, minimo: $('nm-min').value, unidad: $('nm-unidad').value.trim(), ubicacion: $('nm-ubic').value.trim() });
+                ['nm-nombre', 'nm-cat', 'nm-stock', 'nm-min', 'nm-unidad', 'nm-ubic'].forEach(i => $(i).value = '');
+                this.pintarFiltrosCategoria(); this.refrescarInventario(); UI.toast('Medicamento agregado al inventario.');
+            }
+
+            // ---------------- ATENCIONES ----------------
+            registrarCita() {
+                const dni = $('reg-dni').value.trim();
+                const nombre = $('reg-nombre').value.trim();
+                const diag = $('reg-diag').value.trim();
+                const receta = $('reg-receta').value.trim();
+
+                if(!dni || !diag) return UI.toast("Complete los datos: DNI y diagnóstico.", 'error');
+
+                // Ciframos el texto antes de guardarlo en BD (Ley 29733)
+                const texto_plano = `Diagnóstico: ${diag} | Receta: ${receta}`;
+                const datos_cifrados = this.seguridad.cifrar(texto_plano);
+                const fecha = new Date().toLocaleDateString();
+                const hospital = (app.identidad && app.identidad.nombre) || "Puesto de Salud Rural";
+
+                // Buscamos si el paciente existe, sino lo creamos (simulando backend)
+                let pinNuevo = null;     // solo se genera para pacientes nuevos
+                app.mutar(db => {
+                    let paciente = db.pacientes.find(p => p.dni === dni);
+                    if(!paciente) {
+                        pinNuevo = KunaqCore.generarPin();
+                        paciente = { dni: dni, pin: pinNuevo, nombre: nombre || "Paciente Nuevo", historial: [] };
+                        db.pacientes.push(paciente);
+                    } else if (nombre && paciente.nombre === "Paciente Nuevo") { paciente.nombre = nombre; }
+                    paciente.historial.push({ fecha, hospital, datos_cifrados });
+                });
+                // Copia hacia la nube (el DNI viaja convertido en hash SHA-256)
+                if (pinNuevo) {                      // acceso del paciente al portal: DNI + PIN (la nube guarda solo el hash del PIN)
+                    app.pacienteANube(dni, nombre || "Paciente Nuevo", pinNuevo, false);
+                    this.mostrarPin('aviso-pin', nombre || "el paciente", dni, pinNuevo);
+                }
+                app.atencionANube(dni, nombre || "Paciente Nuevo", hospital, fecha, datos_cifrados);
+
+                ['reg-dni', 'reg-nombre', 'reg-diag', 'reg-receta'].forEach(i => $(i).value = '');
+                UI.toast(app.estado().nivel === 'sin_conexion' ? "Ficha cifrada y guardada. Se enviará a la nube cuando haya señal." : "Ficha clínica guardada y encriptada exitosamente.");
+            }
+
+            sincronizar() {
+                app.despertar();
+                const s = app.estado();
+                UI.toast(s.nivel === 'sin_conexion' ? `Sin conexión: ${s.pendientes} cambio(s) quedan guardados en este equipo.` : 'Sincronizando con la nube…', s.nivel === 'sin_conexion' ? 'aviso' : 'ok');
+            }
+
+            mostrarPin(idCaja, nombre, dni, pin) {
+                const caja = $(idCaja);
+                caja.innerHTML = `🔑 PIN de <strong>${esc(nombre)}</strong> (DNI ${esc(dni)}) para el portal del paciente: ` +
+                    `<strong style="font-size:1.4rem; letter-spacing:4px">${esc(pin)}</strong><br>` +
+                    `<small>Entréguelo al paciente en persona. Si lo pierde, use “Generar PIN nuevo” en la búsqueda.</small>`;
+                caja.style.display = 'block';
+            }
+
+            nuevoPin(dni, nombre) {
+                const pin = KunaqCore.generarPin();
+                app.mutar(db => { const p = db.pacientes.find(x => x.dni === dni); if (p) p.pin = pin; });
+                app.pacienteANube(dni, nombre, pin, true);       // reset: reemplaza el PIN anterior y desbloquea al paciente
+                this.mostrarPin('aviso-pin-busq', nombre, dni, pin);
+            }
+
+            desencriptarHistorial() {
+                const dni = $('busq-dni').value.trim();
+                const clave = $('busq-clave').value;
+                const alerta = $('alerta-seguridad');
+                const divRes = $('resultado-busqueda');
+
+                // Validación de credenciales del médico
+                if(!KunaqCore.Sesion.leer() && clave !== "0000") {     // con sesión del servidor no hace falta clave aparte
+                    alerta.style.display = "block";
+                    divRes.innerHTML = "";
+                    return;
+                }
+                alerta.style.display = "none";
+
+                const paciente = this.db.pacientes.find(p => p.dni === dni);
+                if(paciente) return this.mostrarHistorial(paciente.nombre, dni, paciente.historial);
+
+                // No está en este equipo: se consulta la nube (si hay señal)
+                if (app.estado().nivel === 'sin_conexion') { divRes.innerHTML = "<p>Paciente no encontrado en este equipo. Sin conexión no se puede consultar la red.</p>"; return; }
+                divRes.innerHTML = "<p>Buscando en la red…</p>";
+                app.buscarEnNube(dni).then(lista => {
+                    if (!lista.length) { divRes.innerHTML = "<p>Paciente no encontrado en la red.</p>"; return; }
+                    this.mostrarHistorial(lista[0].nombre || "Paciente", dni, lista);
+                }).catch(() => { divRes.innerHTML = "<p>No se pudo consultar la red (señal débil). Intente de nuevo.</p>"; });
+            }
+
+            mostrarHistorial(nombre, dni, historial) {
+                // PROGRAMACIÓN FUNCIONAL: map() para renderizar desencriptando
+                const historialHTML = historial.map(cita => {
+                    const datosClaros = this.seguridad.descifrar(cita.datos_cifrados);
+                    return `<div style="background:#F1F5F9; padding:10px; margin-bottom:10px; border-left:4px solid var(--primary);">
+                                <strong>📅 ${esc(cita.fecha)} - ${esc(cita.hospital)}</strong><br>
+                                🔓 <i>Información Desencriptada:</i> ${esc(datosClaros)}
+                            </div>`;
+                }).join('');
+                $('resultado-busqueda').innerHTML = `<h4>Historial de: ${esc(nombre)} (DNI: ${esc(dni)})</h4>${historialHTML}` +
+                    `<button type="button" id="btn-nuevo-pin" style="width:auto; margin-top:6px">🔑 Generar PIN nuevo para el paciente</button>` +
+                    `<div id="aviso-pin-busq" role="status" style="display:none; margin-top:12px; padding:12px 14px; border-radius:10px; background:#ECFDF5; border:1px solid #10B981; color:#064E3B;"></div>`;
+                $('btn-nuevo-pin').onclick = () => this.nuevoPin(dni, nombre);
+            }
+
+            // ---------------- EMERGENCIAS ----------------
+            armarEmergencias() {
+                $('plantillas').innerHTML = '<span class="etq" style="margin:0 6px 0 0;align-self:center">Casos frecuentes:</span>' +
+                    PLANTILLAS.map((p, i) => `<button type="button" onclick="gestor.usarPlantilla(${i})">${esc(p.nombre)}</button>`).join('');
+                $('em-reqs').innerHTML = Object.entries(CAPACIDADES).map(([k, v]) => `<label><input type="checkbox" name="req" value="${k}"> ${v}</label>`).join('');
+                $('em-reqs').onchange = () => this.pintarDestinos();
+                $('em-prios').onchange = () => this.pintarDestinos();
+                this.pintarDestinos(); this.pintarSeguimiento();
+            }
+            usarPlantilla(i) {
+                const p = PLANTILLAS[i];
+                $('em-cuadro').value = p.cuadro;
+                document.querySelector(`input[name=prio][value="${p.prioridad}"]`).checked = true;
+                document.querySelectorAll('input[name=req]').forEach(c => c.checked = p.requisitos.includes(c.value));
+                this.pintarDestinos();
+            }
+            requisitosElegidos() { return [...document.querySelectorAll('input[name=req]:checked')].map(c => c.value); }
+
+            // Controlador con Funciones de Orden Superior: ranking = filter + map + sort
+            pintarDestinos() {
+                const yo = app.identidad;
+                $('aviso-vinculo').hidden = !!yo;
+                $('btn-emergencia').disabled = !yo; $('btn-emergencia').style.opacity = yo ? 1 : .5;
+                const previo = (document.querySelector('input[name=destino]:checked') || {}).value;
+                const ranking = app.emergencias.ranking(this.requisitosElegidos());
+                if (!ranking.length) { $('em-destinos').dataset.h = ''; $('em-destinos').innerHTML = '<p class="vacio">No hay hospitales vinculados que se vean desde este equipo. Si envía la alerta, la nube buscará uno en cuanto haya señal.</p>'; return; }
+                const mejor = ControladorEmergencias.mejor(ranking);
+                const elegido = ranking.some(r => r.dispositivo.id === previo) ? previo : mejor.dispositivo.id;
+                const htmlDestinos = ranking.map(r => {
+                    const d = r.dispositivo, senal = ControladorEmergencias.senal(d);
+                    return `<label class="destino"><input type="radio" name="destino" value="${esc(d.id)}" ${d.id === elegido ? 'checked' : ''}>
+                        <b>${esc(d.nombre)}</b>${r === mejor ? '<span class="rec">Recomendado</span>' : ''}
+                        <p>Categoría ${esc(d.categoria)} · ${UI.camasTxt(d.camas_uci)}${r.distanciaKm != null ? ' · a ' + r.distanciaKm + ' km' : ''} · ${{ en_linea: 'en línea', debil: 'señal débil', sin_senal: 'sin señal' }[senal]}</p>
+                        <p>${r.cumpleTodo ? '<span class="ok">✓ Cuenta con todo lo requerido</span>' : '<span class="falta">Le falta: ' + r.faltantes.map(f => esc(CAPACIDADES[f])).join(', ') + '</span>'}</p></label>`;
+                }).join('');
+                if ($('em-destinos').dataset.h !== htmlDestinos) { $('em-destinos').innerHTML = htmlDestinos; $('em-destinos').dataset.h = htmlDestinos; }
+            }
+
+            enviarEmergencia() {
+                const cuadro = $('em-cuadro').value.trim();
+                if (!cuadro) { $('em-cuadro').focus(); return UI.toast('Describa el cuadro clínico del paciente.', 'error'); }
+                try {
+                    const dest = document.querySelector('input[name=destino]:checked');
+                    const a = app.emergencias.enviar({ paciente: $('em-paciente').value.trim(), dni: $('em-dni').value.trim(), edad: $('em-edad').value,
+                        cuadro, prioridad: +document.querySelector('input[name=prio]:checked').value, requisitos: this.requisitosElegidos(), destino: dest ? dest.value : null });
+                    ['em-paciente', 'em-edad', 'em-dni', 'em-cuadro'].forEach(i => $(i).value = '');
+                    document.querySelectorAll('input[name=req]').forEach(c => c.checked = false); this.pintarDestinos();
+                    const s = app.estado().nivel;
+                    UI.toast(s === 'sin_conexion' ? 'Sin señal: la emergencia quedó guardada con prioridad máxima y saldrá apenas haya conexión.' : `Alerta enviada${a.destino_nombre ? ' a ' + a.destino_nombre : ''}.`, s === 'sin_conexion' ? 'aviso' : 'ok');
+                } catch (e) { UI.toast(e.message, 'error'); }
+            }
+
+            pintarSeguimiento() {
+                const tarjeta = (a, propia) => {
+                    const det = app.emergencias.detalle(a);
+                    const pasos = (a.bitacora || []).slice(-4).map(b => `<li>${esc(b.texto)}</li>`).join('');
+                    return `<article class="seg s-${esc(a.estado)}"><header><span>${UI.chipsPrioridad(a.prioridad)} <strong>${esc(det.paciente || 'Paciente sin identificar')}</strong> · ${esc(det.cuadro || '')}</span>
+                        <span class="estado">${esc(UI.estadoAlerta(a.estado))}</span></header>
+                        <p class="pendientes" style="margin:6px 0 0">${propia ? 'Destino: ' + esc(a.destino_nombre || 'por asignar') : 'Origen: ' + esc(a.origen_nombre)} · ${UI.tiempoRelativo(a.creada)}</p><ol>${pasos}</ol></article>`;
+                };
+                const env = app.emergencias.enviadas(), rec = app.emergencias.recibidas();
+                const hEnv = env.length ? env.map(a => tarjeta(a, true)).join('') : '<p class="vacio">Todavía no se envió ninguna emergencia desde este equipo.</p>';
+                if ($('seg-enviadas').dataset.h !== hEnv) { $('seg-enviadas').innerHTML = hEnv; $('seg-enviadas').dataset.h = hEnv; }
+                $('tit-recibidas').hidden = !rec.length;
+                const hRec = rec.map(a => tarjeta(a, false)).join('');
+                if ($('seg-recibidas').dataset.h !== hRec) { $('seg-recibidas').innerHTML = hRec; $('seg-recibidas').dataset.h = hRec; }
+            }
+        }
+
+        const gestor = new GestorHospital();
+        if (KunaqCore.Sesion.leer()) $('busq-clave').style.display = 'none';   // la sesión del servidor ya acredita al personal
+
+        // ---- conexión y datos en vivo ----
+        UI.montarEstado($('estado-conexion'), app);
+        $('chk-offline').checked = app.config.forzarOffline;
+        $('chk-offline').onchange = (e) => { app.setForzarOffline(e.target.checked); UI.toast(e.target.checked ? 'Sin internet simulado: todo queda guardado en este equipo.' : 'Internet restablecido: enviando lo pendiente…', 'aviso'); };
+        const pintarEquipo = () => { const y = app.identidad; $('lema-equipo').textContent = y ? `${y.nombre} · ${KunaqCore.TIPOS[y.tipo]} · Categoría ${y.categoria}` : 'Equipo sin vincular'; };
+        const pendientes = () => { const n = app.colaItems().length; $('txt-pendientes').textContent = n ? `${n} cambio(s) guardados en este equipo esperando señal para subir.` : 'Todo está sincronizado con la nube.'; };
+        pintarEquipo(); pendientes();
+        app.ev.on('estado', pendientes);
+        app.ev.on('inventario', () => { gestor.pintarFiltrosCategoria(); gestor.refrescarInventario(); });
+        app.ev.on('dispositivos', () => gestor.pintarDestinos());
+        app.ev.on('alertas', () => gestor.pintarSeguimiento());
+        app.ev.on('identidad', () => { pintarEquipo(); gestor.pintarDestinos(); });
+        app.ev.on('datos', () => { gestor.refrescarInventario(); gestor.pintarDestinos(); gestor.pintarSeguimiento(); pintarEquipo(); });
+        app.ev.on('error-sync', (r) => UI.toast('La nube rechazó ' + r.length + ' cambio(s): ' + r[0].error, 'error'));
+        setInterval(() => gestor.pintarSeguimiento(), 20000);
+    </script>
+</body>
+</html>

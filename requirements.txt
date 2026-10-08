@@ -1,0 +1,4 @@
+# Dependencias del servidor en producción (Render).
+# El servidor usa la librería estándar; estas dos habilitan PostgreSQL (DATABASE_URL) y el cifrado en reposo (KUNAQ_LLAVE).
+psycopg[binary]>=3.1
+cryptography>=42
